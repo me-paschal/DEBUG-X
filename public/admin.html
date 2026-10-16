@@ -339,7 +339,7 @@
                   </select>
                 </td>
                 <td style="color:var(--muted)">${new Date(bug.createdAt).toLocaleDateString()}</td>
-                <td>${bug.file ? `<a href="/uploads/${bug.file}" target="_blank" style="color:var(--blue2);font-size:12px">View</a>` : '—'}</td>
+                <td>${bug.file ? `<a href="${bug.file}" target="_blank" rel="noopener noreferrer" style="color:var(--blue2);font-size:12px">View</a>` : '—'}</td>
                 <td><button class="delete-btn" onclick="deleteBug('${bug._id}')">Delete</button></td>
               </tr>
             `).join('')}

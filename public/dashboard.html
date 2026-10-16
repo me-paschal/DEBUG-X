@@ -399,10 +399,10 @@
       <div class="form-group">
         <label>Attach File (optional)</label>
         <div class="file-upload" id="fileUpload">
-          <input type="file" id="fileInput" accept=".png,.jpg,.jpeg,.gif,.pdf,.zip,.txt,.js,.html,.css" onchange="handleFileSelect(this)" />
+          <input type="file" id="fileInput" accept=".png,.jpg,.jpeg,.gif,.pdf,.zip,.txt" onchange="handleFileSelect(this)" />
           <div class="file-icon">📎</div>
           <p><span>Click to upload</span> or drag and drop</p>
-          <p style="font-size:12px;margin-top:4px">PNG, JPG, PDF, ZIP, JS, HTML (max 10MB)</p>
+          <p style="font-size:12px;margin-top:4px">PNG, JPG, GIF, PDF, ZIP, or TXT (max 10MB)</p>
           <div class="file-name" id="fileName"></div>
         </div>
       </div>
@@ -544,7 +544,7 @@
                   <td>${bug.category}</td>
                   <td><span class="badge badge-${bug.status === 'open' ? 'open' : bug.status === 'in-progress' ? 'progress' : 'done'}">${bug.status}</span></td>
                   <td>${new Date(bug.createdAt).toLocaleDateString()}</td>
-                  <td>${bug.file ? `<a href="/uploads/${bug.file}" target="_blank" style="color:var(--blue2);font-size:12px">View</a>` : '—'}</td>
+                  <td>${bug.file ? `<a href="${bug.file}" target="_blank" rel="noopener noreferrer" style="color:var(--blue2);font-size:12px">View</a>` : '—'}</td>
                 </tr>
               `).join('')}
             </tbody>

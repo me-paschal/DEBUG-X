@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
-const path = require('path');
+const util = require('util');
 const { Resend } = require('resend');
 const Bug = require('../models/Bug');
 const User = require('../models/User');
@@ -20,6 +20,8 @@ const storage = new CloudinaryStorage({
   cloudinary,
   params: {
     folder: 'debugx',
+    // Supports images as well as PDFs, ZIPs, and text files.
+    resource_type: 'auto',
     allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'pdf', 'zip', 'txt']
   }
 });
@@ -28,6 +30,24 @@ const upload = multer({
   storage,
   limits: { fileSize: 10 * 1024 * 1024 } // 10MB
 });
+
+// Multer runs before the route handler, so its errors are not caught by the
+// try/catch inside the handler. Convert Cloudinary's error object into a
+// useful response and log the full object for diagnosis.
+function uploadSingle(req, res, next) {
+  upload.single('file')(req, res, (err) => {
+    if (!err) return next();
+
+    console.error('File upload failed:', util.inspect(err, { depth: null }));
+
+    const message = err.message || err.error?.message || 'File upload failed.';
+    const status = err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE'
+      ? 413
+      : 400;
+
+    return res.status(status).json({ message });
+  });
+}
  
 // ── NODEMAILER TRANSPORTER ──
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -46,7 +66,7 @@ function requireAdmin(req, res, next) {
 }
 
 // ── POST /api/bugs — Submit a bug ──
-router.post('/', requireAuth, upload.single('file'), async (req, res) => {
+router.post('/', requireAuth, uploadSingle, async (req, res) => {
   try {
     const { title, description, category } = req.body;
 
@@ -66,8 +86,6 @@ router.post('/', requireAuth, upload.single('file'), async (req, res) => {
     });
 
     // ── Send email notification to owner ──
-    const fileInfo = req.file ? `\nAttached file: ${req.file.originalname}` : '\nNo file attached.';
-
     const mailOptions = {
       from: `"DebugX Notifications" <${process.env.EMAIL_USER}>`,
       to: process.env.OWNER_EMAIL,
@@ -107,9 +125,10 @@ else console.log('Email sent successfully!');
 
     res.status(201).json({ message: 'Bug submitted successfully.', bug });
  } catch (err) {
-    console.error('FULL ERROR:', JSON.stringify(err, null, 2));
-    console.error('ERROR MESSAGE:', err.message);
-    res.status(500).json({ message: err.message });
+    console.error('ERROR NAME:', err.name);
+    console.error('ERROR MSG:', err.message);
+    console.error('ERROR STACK:', err.stack);
+    res.status(500).json({ message: err.message || 'Server error' });
   }
 });
 
@@ -154,5 +173,6 @@ router.delete('/:id', requireAdmin, async (req, res) => {
     res.status(500).json({ message: 'Server error.' });
   }
 });
+console.log('bugs.js loaded successfully');
 
 module.exports = router;
